@@ -1,37 +1,84 @@
-## Welcome to GitHub Pages
+# go-get-youtube v 0.2
+A tiny Go library + client (command line Youtube video downloader) for downloading Youtube videos. The library is capable of fetching Youtube video metadata, in addition to downloading videos. If ffmpeg is available, client can extract MP3 audio from downloaded video files.
 
-You can use the [editor on GitHub](https://github.com/Kunal-Diwan/go-get-youtube/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+# Client
+Once you have compiled or [downloaded](https://github.com/Kunal-Diwan/go-get-youtube/releases) the binary, simply run the following on your terminal:
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+`ytdownload -id=youtube_video_id`
 
-### Markdown
+## Building
+```
+$ export GOPATH=$PWD/go-get-youtube
+$ go get github.com/Kunal-Diwan/go-get-youtube
+$ cd go-get-youtube/bin
+$ ./go-get-youtube -id=cN_DpYBzKso -itag 18 -rename -mp3
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Extracted audio: cN_DpYBzKso-rob-pike-concurrency-is-not-parallelis.mp3
+Download duration: 5s
+Average speed: 16.1MB/s
+Downloaded video: cN_DpYBzKso-rob-pike-concurrency-is-not-parallelism.mp4
+```
+# Library
 
-```markdown
-Syntax highlighted code block
+## Methods
 
-# Header 1
-## Header 2
-### Header 3
+### youtube.Get(youtube_video_id)
+`video, err = youtube.Get(youtube_video_id)`
 
-- Bulleted
-- List
+Initializes a `Video` object by fetching its metdata from Youtube. `Video` is a struct with the following structure
 
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+```go
+{
+	Id, Title, Author, Keywords, Thumbnail_url string
+	Avg_rating float32
+	View_count,	Length_seconds int
+	Formats []Format
+}
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+`Video.Formats` is an array of the `Format` struct, which looks like this:
 
-### Jekyll Themes
+```
+type Format struct {
+	Itag int
+	Video_type, Quality, Url string
+}
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Kunal-Diwan/go-get-youtube/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+type Option struct {
+	Resume bool // resume failed or cancelled download
+	Rename bool // rename output file using video title
+	Mp3    bool // extract audio using ffmpeg
+}
+```
 
-### Support or Contact
+### youtube.Download(format_index, output_file, option)
+`format_index` is the index of the format listed in the `Video.Formats` array. Youtube offers a number of video formats (mp4, webm, 3gp etc.)
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+### youtube.GetExtension(format_index)
+Guesses the file extension (avi, 3gp, mp4, webm) based on the format chosen
+
+## Example
+```go
+import (
+	youtube "github.com/Kunal-Diwan/go-get-youtube/youtube"
+)
+
+func main() {
+	// get the video object (with metdata)
+	video, err := youtube.Get("FTl0tl9BGdc")
+
+	// download the video and write to file
+	option := &youtube.Option{
+		Rename: true,  // rename file using video title
+		Resume: true,  // resume cancelled download
+		Mp3:    true,  // extract audio to MP3
+	}
+	video.Download(0, "video.mp4", option)
+}
+```
+## Credits 
+
+[![Kunal Diwan](https://img.shields.io/badge/Kunal-Diwan-green?style=for-the-badge&logo=appveyor)](https://t.me/KunalDiwan) 
+
+
+
