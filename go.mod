@@ -1,3 +1,3 @@
-module github.com/Kunal-Diwan/go-get-youtube
+module go-youtube-downloader
 
-go 1.12
+go 1.18
