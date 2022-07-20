@@ -23,10 +23,11 @@ type Video struct {
 	ViewCount, LengthSeconds                  int
 	Formats                                   []Format
 	Filename                                  string
+	ContentLength                             string
 }
 type Format struct {
-	Itag                    int
-	VideoType, Quality, Url string
+	Itag                                   int
+	VideoType, Quality, Url, ContentLength string
 }
 
 // GetMetaInformation return Video from the Video, given by videoId
@@ -82,13 +83,15 @@ func fillVideoData(videoId string) (*Video, error) {
 	l, _ := strconv.Atoi(metaInformation.VideoDetails.LengthSeconds)
 	video.LengthSeconds = l
 
-	formatParams := metaInformation.StreamingData.Formats
-	for _, f := range formatParams {
+	adaptiveFormats := metaInformation.StreamingData.AdaptiveFormats
+	for _, f := range adaptiveFormats {
+
 		video.Formats = append(video.Formats, Format{
-			Itag:      f.Itag,
-			VideoType: f.MimeType,
-			Quality:   f.Quality,
-			Url:       f.URL,
+			Itag:          f.Itag,
+			VideoType:     f.MimeType,
+			Quality:       f.Quality,
+			Url:           f.URL,
+			ContentLength: f.ContentLength,
 		})
 	}
 
@@ -96,7 +99,20 @@ func fillVideoData(videoId string) (*Video, error) {
 }
 
 func getVideoMetaInformation(videoId string) (youtubeResponse youtubeResponse.YoutubeResponse, err error) {
-	body := strings.NewReader("{\n \"context\": {\n   \"client\": {\n    \"hl\": \"en\",\n    \"clientName\": \"WEB\",\n    \"clientVersion\": \"2.20210721.00.00\",\n    \"mainAppWebInfo\": {\n        \"graftUrl\": \"/watch?v=" + videoId + "\"\n    }\n   }\n  },\n  \"videoId\": \"" + videoId + "\"\n}")
+
+	body := strings.NewReader(
+		"{" +
+			"  \"videoId\": \"" + videoId + "\"," +
+			"  \"context\": {" +
+			"    \"client\": {" +
+			"      \"hl\": \"en\"," +
+			"      \"gl\": \"US\"," +
+			"      \"clientName\": \"ANDROID\"," +
+			"      \"clientVersion\": \"16.02\"" +
+			"    }" +
+			"  }" +
+			"}")
+
 	request, err := http.NewRequest("POST", YOUTUBE_URL+API_KEY, body)
 	client := &http.Client{}
 	response, err := client.Do(request)

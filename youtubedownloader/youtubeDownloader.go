@@ -63,14 +63,11 @@ func (video *Video) Download(index int, filename string, option *Option) error {
 	video.Filename = filename
 
 	// GetMetaInformation video content length
-	if resp, err := http.Head(url); err != nil {
+	if len(url) == 0 && len(video.Formats[index].ContentLength) == 0 {
 		return fmt.Errorf("head request failed: %s", err)
 	} else {
-		if resp.StatusCode == 403 {
-			return errors.New("head request failed: Video is 403 forbidden")
-		}
-
-		if size := resp.Header.Get("Content-Length"); len(size) == 0 {
+		video.ContentLength = video.Formats[0].ContentLength
+		if size := video.Formats[index].ContentLength; len(size) == 0 {
 			return errors.New("Content-Length header is missing")
 		} else if length, err = strconv.ParseInt(size, 10, 64); err != nil {
 			return fmt.Errorf("invalid Content-Length: %s", err)
