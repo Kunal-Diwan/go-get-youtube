@@ -32,6 +32,7 @@ type Format struct {
 
 // GetMetaInformation return Video from the Video, given by videoId
 func GetMetaInformation(videoId string) (Video, error) {
+	videoId = strings.TrimSuffix(videoId, "\r")
 	if strings.Contains(videoId, "youtube.com/watch?") {
 		videoId, _ = extractId(videoId)
 	} else {
@@ -70,11 +71,13 @@ func fillVideoData(videoId string) (*Video, error) {
 	}
 	// collate the necessary params
 	video := &Video{
-		Id:           videoId,
-		Title:        metaInformation.VideoDetails.Title,
-		Author:       metaInformation.VideoDetails.Author,
-		Keywords:     fmt.Sprint(metaInformation.VideoDetails.Keywords),
-		ThumbnailUrl: metaInformation.VideoDetails.Thumbnail.Thumbnails[0].URL,
+		Id:       videoId,
+		Title:    metaInformation.VideoDetails.Title,
+		Author:   metaInformation.VideoDetails.Author,
+		Keywords: fmt.Sprint(metaInformation.VideoDetails.Keywords),
+	}
+	if len(metaInformation.VideoDetails.Thumbnail.Thumbnails) != 0 {
+		video = &Video{ThumbnailUrl: metaInformation.VideoDetails.Thumbnail.Thumbnails[0].URL}
 	}
 
 	v, _ := strconv.Atoi(metaInformation.VideoDetails.ViewCount)
