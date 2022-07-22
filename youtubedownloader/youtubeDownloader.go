@@ -122,6 +122,7 @@ func (video *Video) Download(index int, filename string, option *Option) error {
 	}
 
 	// Extract audio from downloaded video using ffmpeg
+	//TODO CURRENTLY DOES NOT WORK!
 	if option.Mp3 {
 		if err := out.Close(); err != nil {
 			fmt.Println("Error:", err)

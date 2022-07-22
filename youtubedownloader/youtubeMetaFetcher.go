@@ -38,7 +38,6 @@ func GetMetaInformation(videoId string) (Video, error) {
 	} else {
 		return Video{}, fmt.Errorf("pls enter a valid YouTube link, %s, is not valid \n", videoId)
 	}
-
 	// fetch video meta from youtube
 	meta, err := fillVideoData(videoId)
 
@@ -70,14 +69,13 @@ func fillVideoData(videoId string) (*Video, error) {
 		return &Video{}, fmt.Errorf("error fetching metaInformation: %w", err)
 	}
 	// collate the necessary params
-	video := &Video{
-		Id:       videoId,
-		Title:    metaInformation.VideoDetails.Title,
-		Author:   metaInformation.VideoDetails.Author,
-		Keywords: fmt.Sprint(metaInformation.VideoDetails.Keywords),
-	}
+	video := &Video{}
+	video.Id = videoId
+	video.Title = metaInformation.VideoDetails.Title
+	video.Author = metaInformation.VideoDetails.Author
+	video.Keywords = fmt.Sprint(metaInformation.VideoDetails.Keywords)
 	if len(metaInformation.VideoDetails.Thumbnail.Thumbnails) != 0 {
-		video = &Video{ThumbnailUrl: metaInformation.VideoDetails.Thumbnail.Thumbnails[0].URL}
+		video.ThumbnailUrl = metaInformation.VideoDetails.Thumbnail.Thumbnails[0].URL
 	}
 
 	v, _ := strconv.Atoi(metaInformation.VideoDetails.ViewCount)
@@ -85,10 +83,9 @@ func fillVideoData(videoId string) (*Video, error) {
 
 	l, _ := strconv.Atoi(metaInformation.VideoDetails.LengthSeconds)
 	video.LengthSeconds = l
-
-	adaptiveFormats := metaInformation.StreamingData.AdaptiveFormats
-	for _, f := range adaptiveFormats {
-
+	formats := metaInformation.StreamingData.Formats
+	//highestQualityFormat := formats[len(formats)-1]
+	for _, f := range formats {
 		video.Formats = append(video.Formats, Format{
 			Itag:          f.Itag,
 			VideoType:     f.MimeType,
@@ -123,10 +120,21 @@ func getVideoMetaInformation(videoId string) (youtubeResponse youtubeResponse.Yo
 		fmt.Errorf("curl error: %w", err)
 	}
 	err = parseResponseIntoObject(response, &youtubeResponse)
+
+	err = determineContentLength(&youtubeResponse)
 	if err != nil {
 		return youtubeResponse, fmt.Errorf("error while parsing response into object: %w", err)
 	}
 	return youtubeResponse, nil
+}
+
+func determineContentLength(youtubeResponse *youtubeResponse.YoutubeResponse) error {
+	bestQualityIndex := len(youtubeResponse.StreamingData.Formats) - 1
+	request, err := http.NewRequest("GET", youtubeResponse.StreamingData.Formats[bestQualityIndex].URL, nil)
+	client := &http.Client{}
+	response, err := client.Do(request)
+	youtubeResponse.StreamingData.Formats[bestQualityIndex].ContentLength = strconv.FormatInt(response.ContentLength, 10)
+	return err
 }
 
 func parseResponseIntoObject(response *http.Response, youtubeResponse *youtubeResponse.YoutubeResponse) error {

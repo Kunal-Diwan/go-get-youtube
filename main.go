@@ -26,12 +26,13 @@ func main() {
 		} else {
 			//func (video *Video) Download(index int, filename string, option *Option) error {
 			option := &youtubedownloader.Option{
-				Rename: true, // rename file using video title
-				Resume: true, // resume cancelled download
-				Mp3:    true, // extract audio to MP3
+				Rename: true,  // rename file using video title
+				Resume: false, // resume cancelled download
+				Mp3:    false, // extract audio to MP3
 			}
 			title := video.Title + ".mp4"
-			video.Download(0, title, option)
+			index := len(video.Formats) - 1
+			video.Download(index, title, option)
 
 		}
 	}
